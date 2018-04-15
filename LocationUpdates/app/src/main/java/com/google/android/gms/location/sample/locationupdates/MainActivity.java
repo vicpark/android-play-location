@@ -160,8 +160,9 @@ public class MainActivity extends AppCompatActivity {
     private Location mCurrentLocation;
 
     // UI Widgets.
-    private Button mStartUpdatesButton;
-    private Button mStopUpdatesButton;
+//    private Button mStartUpdatesButton;
+//    private Button mStopUpdatesButton;
+    private Button mUpdateLocButton;
     private TextView mLastUpdateTimeTextView;
     private TextView mLatitudeTextView;
     private TextView mLongitudeTextView;
@@ -298,8 +299,37 @@ public class MainActivity extends AppCompatActivity {
 
 //        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
+        // Locate the UI widgets.
+//        mStartUpdatesButton = (Button) findViewById(R.id.start_updates_button);
+//        mStopUpdatesButton = (Button) findViewById(R.id.stop_updates_button);
+//        mLatitudeTextView = (TextView) findViewById(R.id.latitude_text);
+//        mLongitudeTextView = (TextView) findViewById(R.id.longitude_text);
+//        mLastUpdateTimeTextView = (TextView) findViewById(R.id.last_update_time_text);
+
+//        mUpdateLocButton = (Button) findViewById(R.id.button2);
+
+        // Set labels.
+        mLatitudeLabel = getResources().getString(R.string.latitude_label);
+        mLongitudeLabel = getResources().getString(R.string.longitude_label);
+        mLastUpdateTimeLabel = getResources().getString(R.string.last_update_time_label);
+
+        mRequestingLocationUpdates = true;
+        mLastUpdateTime = "";
+
+        // Update values using data stored in the Bundle.
+        updateValuesFromBundle(savedInstanceState);
+
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        mSettingsClient = LocationServices.getSettingsClient(this);
+
+        // Kick off the process of building the LocationCallback, LocationRequest, and
+        // LocationSettingsRequest objects.
+        createLocationCallback();
+        createLocationRequest();
+        buildLocationSettingsRequest();
+        startLocationUpdates();
+        updateUI();
         adapter = new CustomListAdapter(this, itemname, imgid, mCurrentLocation);
-        //TODO: LOCATION MIGHT ALWAYS BE EMPTY FIRST
 
         list = (ListView) findViewById(R.id.list);
         list.setAdapter(adapter);
@@ -317,32 +347,6 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-        // Locate the UI widgets.
-        mStartUpdatesButton = (Button) findViewById(R.id.start_updates_button);
-        mStopUpdatesButton = (Button) findViewById(R.id.stop_updates_button);
-        mLatitudeTextView = (TextView) findViewById(R.id.latitude_text);
-        mLongitudeTextView = (TextView) findViewById(R.id.longitude_text);
-        mLastUpdateTimeTextView = (TextView) findViewById(R.id.last_update_time_text);
-
-        // Set labels.
-        mLatitudeLabel = getResources().getString(R.string.latitude_label);
-        mLongitudeLabel = getResources().getString(R.string.longitude_label);
-        mLastUpdateTimeLabel = getResources().getString(R.string.last_update_time_label);
-
-        mRequestingLocationUpdates = false;
-        mLastUpdateTime = "";
-
-        // Update values using data stored in the Bundle.
-        updateValuesFromBundle(savedInstanceState);
-
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-        mSettingsClient = LocationServices.getSettingsClient(this);
-
-        // Kick off the process of building the LocationCallback, LocationRequest, and
-        // LocationSettingsRequest objects.
-        createLocationCallback();
-        createLocationRequest();
-        buildLocationSettingsRequest();
     }
 
     /**
@@ -371,7 +375,7 @@ public class MainActivity extends AppCompatActivity {
             if (savedInstanceState.keySet().contains(KEY_LAST_UPDATED_TIME_STRING)) {
                 mLastUpdateTime = savedInstanceState.getString(KEY_LAST_UPDATED_TIME_STRING);
             }
-            updateUI();
+            updateLocationUI();
         }
     }
 
@@ -477,7 +481,7 @@ public class MainActivity extends AppCompatActivity {
     public void startUpdatesButtonHandler(View view) {
         if (!mRequestingLocationUpdates) {
             mRequestingLocationUpdates = true;
-            setButtonsEnabledState();
+//            setButtonsEnabledState();
             startLocationUpdates();
         }
     }
@@ -546,7 +550,7 @@ public class MainActivity extends AppCompatActivity {
                                 mRequestingLocationUpdates = false;
                         }
 
-                        updateUI();
+//                        updateUI();
                     }
                 });
     }
@@ -555,7 +559,7 @@ public class MainActivity extends AppCompatActivity {
      * Updates all UI fields.
      */
     private void updateUI() {
-        setButtonsEnabledState();
+//        setButtonsEnabledState();
         updateLocationUI();
     }
 
@@ -565,27 +569,27 @@ public class MainActivity extends AppCompatActivity {
      * enabled if the user is not requesting location updates. The Stop Updates button is enabled
      * if the user is requesting location updates.
      */
-    private void setButtonsEnabledState() {
-        if (mRequestingLocationUpdates) {
-            mStartUpdatesButton.setEnabled(false);
-            mStopUpdatesButton.setEnabled(true);
-        } else {
-            mStartUpdatesButton.setEnabled(true);
-            mStopUpdatesButton.setEnabled(false);
-        }
-    }
+//    private void setButtonsEnabledState() {
+//        if (mRequestingLocationUpdates) {
+//            mStartUpdatesButton.setEnabled(false);
+//            mStopUpdatesButton.setEnabled(true);
+//        } else {
+//            mStartUpdatesButton.setEnabled(true);
+//            mStopUpdatesButton.setEnabled(false);
+//        }
+//    }
 
     /**
      * Sets the value of the UI fields for the location latitude, longitude and last update time.
      */
     private void updateLocationUI() {
         if (mCurrentLocation != null) {
-            mLatitudeTextView.setText(String.format(Locale.ENGLISH, "%s: %f", mLatitudeLabel,
-                    mCurrentLocation.getLatitude()));
-            mLongitudeTextView.setText(String.format(Locale.ENGLISH, "%s: %f", mLongitudeLabel,
-                    mCurrentLocation.getLongitude()));
-            mLastUpdateTimeTextView.setText(String.format(Locale.ENGLISH, "%s: %s",
-                    mLastUpdateTimeLabel, mLastUpdateTime));
+//            mLatitudeTextView.setText(String.format(Locale.ENGLISH, "%s: %f", mLatitudeLabel,
+//                    mCurrentLocation.getLatitude()));
+//            mLongitudeTextView.setText(String.format(Locale.ENGLISH, "%s: %f", mLongitudeLabel,
+//                    mCurrentLocation.getLongitude()));
+//            mLastUpdateTimeTextView.setText(String.format(Locale.ENGLISH, "%s: %s",
+//                    mLastUpdateTimeLabel, mLastUpdateTime));
 
             // update Location for List
             extratxt = (TextView) list.findViewById(R.id.textView1);
@@ -611,7 +615,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
                         mRequestingLocationUpdates = false;
-                        setButtonsEnabledState();
+//                        setButtonsEnabledState();
                     }
                 });
     }
