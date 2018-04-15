@@ -34,9 +34,15 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ListView;
 
+
+import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -52,9 +58,26 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.analytics.FirebaseAnalytics;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
 
 
@@ -73,6 +96,7 @@ import java.util.Locale;
  * (as specified in AndroidManifest.xml).
  */
 public class MainActivity extends AppCompatActivity {
+
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
@@ -102,6 +126,7 @@ public class MainActivity extends AppCompatActivity {
     private final static String KEY_REQUESTING_LOCATION_UPDATES = "requesting-location-updates";
     private final static String KEY_LOCATION = "location";
     private final static String KEY_LAST_UPDATED_TIME_STRING = "last-updated-time-string";
+    private static final int SIGN_IN_REQUEST_CODE = 2;
 
     /**
      * Provides access to the Fused Location Provider API.
@@ -146,6 +171,13 @@ public class MainActivity extends AppCompatActivity {
     private String mLongitudeLabel;
     private String mLastUpdateTimeLabel;
 
+
+    TextView extratxt;
+    public static final String LANDMARK_NAME = "landmarkname";
+
+    public MainActivity() throws IOException, JSONException {
+    }
+
     /**
      * Tracks the status of the location updates request. Value changes when the user presses the
      * Start Updates and Stop Updates buttons.
@@ -156,14 +188,135 @@ public class MainActivity extends AppCompatActivity {
      * Time when the location was updated represented as a String.
      */
     private String mLastUpdateTime;
+    CustomListAdapter adapter;
+    ListView list;
+//    private FirebaseAnalytics mFirebaseAnalytics;
+////    private FirebaseListAdapter<Comment> adapter;
+////    private com.FireBase.ui.FirebaseListAdapter<Comment> adapter;
+//
+//
+//    public String readFile(String fileName) throws IOException {
+//        BufferedReader reader = null;
+//        reader = new BufferedReader(new InputStreamReader(getAssets().open(fileName), "UTF-8"));
+//
+//        String content = "";
+//        String line;
+//        while ((line = reader.readLine()) != null) {
+//            content = content + line;
+//        }
+//
+//        return content;
+//
+//    }
+
+    String[] itemname = {
+            "Class of 1927 Bear",
+            "Stadium Entrance Bear",
+            "Macchi Bears",
+            "Les Bears",
+            "Strawberry Creek Topiary Bear",
+            "South Hall Little Bear",
+            "Great Bear Bell Bears",
+            "Campanile Esplanade Bears"
+    };
+
+    Integer[] imgid = {
+            R.drawable.mlk_bear,
+            R.drawable.outside_stadium,
+            R.drawable.macchi_bears,
+            R.drawable.les_bears,
+            R.drawable.strawberry_creek,
+            R.drawable.south_hall,
+            R.drawable.bell_bears,
+            R.drawable.in_stadium, //bench_bears?
+    };
+
+    Double[][] coordinates = {
+            {37.869288, -122.260125},
+            {37.871305, -122.252516},
+            {37.874118, -122.258778},
+            {37.871707, -122.253602},
+            {37.869861, -122.261148},
+            {37.871382, -122.258355},
+            {37.872061599999995, -122.2578123},
+            {37.87233810000001, -122.25792999999999}
+    };
+
+    private FirebaseAuth mFirebaseAuth;
+    private FirebaseUser mFirebaseUser;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+//        mFirebaseUser= FirebaseAuth.getInstance().getCurrentUser();
+//
+//        if(mFirebaseUser == null) {
+//            // Start sign in/sign up activity
+//            startActivity(new Intent(this, AuthUiActivity.class));
+//            finish();
+//            return;
+//
+//        } else {
+//            // User is already signed in. Therefore, display
+//            // a welcome Toast
+//            Toast.makeText(this,
+//                    "Welcome " + mFirebaseUser
+//                            .getDisplayName(),
+//                    Toast.LENGTH_LONG)
+//                    .show();
+//
+//            // Load chat room contents
+////            displayChatMessages();
+//        }
+
         setContentView(R.layout.main_activity);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        FirebaseDatabase db = FirebaseDatabase.getInstance();
+//        DatabaseReference dogsRef = db.getReference("Dogs");
+//        DatabaseReference someRef = dogsRef.child("Molly");
+//
+//
+//
+//        ValueEventListener myDataListener = new ValueEventListener() {
+//            @Override
+//            public void onDataChange(DataSnapshot dataSnapshot) {
+//                // Set a breakpoint in this method and run in debug mode!!
+//                // this will be called each time `someRef` or one of its children is modified
+//                HashMap<String, String> mollyHashMap = (HashMap<String, String>) dataSnapshot.getValue();
+//            }
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {
+//                Log.d("0", "cancelled");
+//            }
+//        };
+//        // try changing `someRef` here
+//        someRef.addValueEventListener(myDataListener);
 
+
+
+//        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+
+        adapter = new CustomListAdapter(this, itemname, imgid, mCurrentLocation);
+        //TODO: LOCATION MIGHT ALWAYS BE EMPTY FIRST
+
+        list = (ListView) findViewById(R.id.list);
+        list.setAdapter(adapter);
+        list.setOnItemClickListener(new OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view,
+                                    int position, long id) {
+                // TODO Auto-generated method stub
+                String Slecteditem = itemname[+position];
+
+                Toast.makeText(getApplicationContext(), Slecteditem, Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(getApplicationContext(), CommentFeedActivity.class);
+                intent.putExtra(LANDMARK_NAME, Slecteditem);
+                startActivity(intent);
+
+            }
+        });
         // Locate the UI widgets.
         mStartUpdatesButton = (Button) findViewById(R.id.start_updates_button);
         mStopUpdatesButton = (Button) findViewById(R.id.stop_updates_button);
@@ -281,6 +434,22 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
+            case SIGN_IN_REQUEST_CODE:
+                if(resultCode == RESULT_OK) {
+                    Toast.makeText(this,
+                            "Successfully signed in. Welcome!",
+                            Toast.LENGTH_LONG)
+                            .show();
+                    displayChatMessages();
+                } else {
+                    Toast.makeText(this,
+                            "We couldn't sign you in. Please try again later.",
+                            Toast.LENGTH_LONG)
+                            .show();
+
+                    // Close the app
+                    finish();
+                }
             // Check for the integer request code originally supplied to startResolutionForResult().
             case REQUEST_CHECK_SETTINGS:
                 switch (resultCode) {
@@ -296,6 +465,9 @@ public class MainActivity extends AppCompatActivity {
                 }
                 break;
         }
+    }
+
+    private void displayChatMessages() {
     }
 
     /**
@@ -333,6 +505,16 @@ public class MainActivity extends AppCompatActivity {
                         Log.i(TAG, "All location settings are satisfied.");
 
                         //noinspection MissingPermission
+//                        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//                            // TODO: Consider calling
+//                            //    ActivityCompat#requestPermissions
+//                            // here to request the missing permissions, and then overriding
+//                            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+//                            //                                          int[] grantResults)
+//                            // to handle the case where the user grants the permission. See the documentation
+//                            // for ActivityCompat#requestPermissions for more details.
+//                            return;
+//                        }
                         mFusedLocationClient.requestLocationUpdates(mLocationRequest,
                                 mLocationCallback, Looper.myLooper());
 
@@ -404,6 +586,11 @@ public class MainActivity extends AppCompatActivity {
                     mCurrentLocation.getLongitude()));
             mLastUpdateTimeTextView.setText(String.format(Locale.ENGLISH, "%s: %s",
                     mLastUpdateTimeLabel, mLastUpdateTime));
+
+            // update Location for List
+            extratxt = (TextView) list.findViewById(R.id.textView1);
+            adapter=new CustomListAdapter(this, itemname, imgid, mCurrentLocation);
+            list.setAdapter(adapter);
         }
     }
 
